@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Grocery Checklist</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    select, button {
+      font-size: 1rem;
+      padding: 0.5rem;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      background: #fff;
+      margin: 0.5rem 0;
+      padding: 0.75rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+    li.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+      background: #d3f0d3;
+    }
+    .details {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    label {
+      flex-grow: 1;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Grocery Checklist</h1>
+  <div class="controls">
+    <label>
+      Sort by:
+      <select id="sortSelector">
+        <option value="default">Default</option>
+        <option value="location">Location</option>
+        <option value="week">Week Needed</option>
+      </select>
+    </label>
+    <button id="resetBtn">Reset</button>
+  </div>
+  <ul id="itemList"></ul>
+
+  <script>
+    const STORAGE_KEY = "groceryChecklist_completed";
+
+    const items = [
+      { name: "Pasta", qty: "10 cup", week: [1], location: "Costco" },
+      { name: "Pesto", qty: "2 cup", week: [1], location: "Home" },
+      { name: "Bread", qty: "7 loaf", week: [1], location: "Costco" },
+      { name: "Mixed Vegetables", qty: "22 cup", week: [1], location: "Costco" },
+      { name: "Soy Sauce", qty: "20 tbsp", week: [1], location: "Costco" },
+      { name: "Rice", qty: "20 cup", week: [1], location: "Costco" },
+      { name: "Tofu", qty: "6 block", week: [1], location: "Cub" },
+      { name: "Meat", qty: "48 pcs", week: [1], location: "Costco" },
+      { name: "Lettuce", qty: "0.5 head", week: [1, 3, 5], location: "Costco" },
+      { name: "Burger", qty: "8 pcs", week: [1], location: "Costco" },
+      { name: "Veggie Burger", qty: "4 pcs", week: [1], location: "Cub" },
+      { name: "Buns", qty: "8 pcs", week: [1], location: "Costco" },
+      { name: "American Cheese", qty: "6 pcs", week: [1], location: "Cub" },
+      { name: "Potato", qty: "27 pcs", week: [1], location: "Cub" },
+      { name: "Bullion", qty: "7 pcs", week: [1], location: "Cub" },
+      { name: "Leek", qty: "4 stalks", week: [1], location: "Cub" },
+      { name: "Thyme", qty: "1 tsp", week: [1], location: "Cub" },
+      { name: "Beans", qty: "4 cup", week: [1], location: "Cub" },
+      { name: "Cheese", qty: "5 cup", week: [1], location: "Cub" },
+      { name: "Sweet Potato", qty: "2 pcs", week: [1], location: "Cub" },
+      { name: "Carrot", qty: "4 pcs", week: [1], location: "Cub" },
+      { name: "Curry Paste", qty: "2 tbsp", week: [1], location: "Cub" },
+      { name: "Curry Powder", qty: "4 tsp", week: [1], location: "Cub" },
+      { name: "Coconut Milk", qty: "2 can", week: [1], location: "Costco" },
+      { name: "Palm Sugar", qty: "2 tbsp", week: [1], location: "Cub" },
+      { name: "Parm", qty: "1 cup", week: [1], location: "Cub" },
+      { name: "Fish", qty: "5 pcs", week: [1], location: "Costco" },
+      { name: "Onion", qty: "2 pcs", week: [1], location: "Costco" },
+      { name: "Carrots", qty: "4 pcs", week: [1], location: "Cub" },
+      { name: "Corn", qty: "2 cup", week: [1], location: "Costco" },
+      { name: "Mushroom Powder", qty: "2 tsp", week: [1], location: "Cub" },
+      { name: "Garlic Powder", qty: "2 tsp", week: [1], location: "Costco" },
+      { name: "Onion Powder", qty: "2 tsp", week: [1], location: "Costco" },
+      { name: "Bread Crumbs", qty: "2 tbsp", week: [1], location: "Cub" },
+      { name: "Maple Syrup", qty: "1 tbsp", week: [1], location: "Costco" },
+      { name: "Lemon Juice", qty: "2 tsp", week: [1], location: "Cub" },
+      { name: "Quinoa", qty: "2 cup", week: [1], location: "Costco" },
+      { name: "Grapes", qty: "1 cup", week: [1,2,3,4,5], location: "Cub" },
+      { name: "Pumpkin Seeds", qty: "1 tbsp", week: [1], location: "Cub" },
+      { name: "Yogurt cups", qty: "20 count", week: [1], location: "Cub" },
+      { name: "Protein shakes", qty: "20 count", week: [1], location: "Costco" },
+      { name: "Letuce", qty: "40 cups", week: [1,2,3,4,5], location: "Cub" },
+      { name: "shredded carrots", qty: "5 cups", week: [1,2,3,4,5], location: "Cub" },
+      { name: "pumpkin seeds", qty: "5 cups", week: [1], location: "Cub" },
+      { name: "tomatoes", qty: "100 count", week: [1,2,3,4,5], location: "Cub" },
+      { name: "fruit", qty: "20 count", week: [1,2,3,4,5], location: "Cub" },
+      { name: "baby carrots", qty: "5 cups", week: [1,2,3,4,5], location: "Cub" },
+      { name: "oatmeal", qty: "10 cups", week: [1], location: "Costco" },
+      { name: "powdered banana", qty: "1.25 cups", week: [1], location: "Cub" },
+      { name: "apricots", qty: "120 count", week: [1], location: "Cub" },
+      { name: "protien powder", qty: "20 serving", week: [1], location: "Costco" },
+      { name: "yogurt bulk", qty: "1.25 cups", week: [1], location: "Cub" },
+      { name: "hot coco", qty: "20 serving", week: [1], location: "Cub" },
+      { name: "chia seeds/flax", qty: "0.75 cups", week: [1], location: "Cub" },
+      { name: "Tea", qty: "120 count", week: [1], location: "Cub" },
+      { name: "ice tea", qty: "30 count", week: [1], location: "Costco" },
+      { name: "green tea", qty: "30 count", week: [1], location: "Costco" },
+      { name: "spackling water", qty: "30 count", week: [1], location: "Costco" },
+      { name: "soda", qty: "48 ish count", week: [1], location: "Costco" },
+      { name: "Pancakes", qty: "60 count", week: [1], location: "Cub" },
+      { name: "berries", qty: "many", week: [1,2,3,4,5], location: "Cub" },
+      { name: "kitty liter", qty: "8 units", week: [1], location: "Costco" }
+    ];
+
+    let completed = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    function saveCompleted() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+    }
+
+    function renderList(sortBy = 'default') {
+      const list = document.getElementById("itemList");
+      list.innerHTML = "";
+
+      let sortedItems = [...items];
+      if (sortBy === "location") {
+        sortedItems.sort((a, b) => a.location.localeCompare(b.location));
+      } else if (sortBy === "week") {
+        sortedItems.sort((a, b) => Math.min(...a.week) - Math.min(...b.week));
+      }
+
+      const activeItems = sortedItems.filter(item => !completed.includes(item.name));
+      const doneItems = sortedItems.filter(item => completed.includes(item.name));
+
+      [...activeItems, ...doneItems].forEach(item => {
+        const li = document.createElement("li");
+        li.className = completed.includes(item.name) ? "completed" : "";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = completed.includes(item.name);
+        checkbox.onchange = () => {
+          if (checkbox.checked) {
+            completed.push(item.name);
+          } else {
+            completed = completed.filter(name => name !== item.name);
+          }
+          saveCompleted();
+          renderList(sortBy);
+        };
+
+        const label = document.createElement("label");
+        label.innerHTML = `<strong>${item.name}</strong><br/>
+          <span class="details">${item.qty} | Week(s): ${item.week.join(', ')} | Location: ${item.location}</span>`;
+
+        li.appendChild(checkbox);
+        li.appendChild(label);
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById("sortSelector").addEventListener("change", (e) => {
+      renderList(e.target.value);
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      completed = [];
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById("sortSelector").value = "default";
+      renderList("default");
+    });
+
+    renderList();
+  </script>
+</body>
+</html>
