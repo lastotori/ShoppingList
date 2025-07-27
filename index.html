@@ -13,17 +13,19 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 1rem;
     }
     .controls {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 0.5rem;
       align-items: center;
       margin-bottom: 1rem;
     }
     select, button {
       font-size: 1rem;
       padding: 0.5rem;
+      width: 100%;
+      max-width: 300px;
     }
     ul {
       list-style-type: none;
@@ -35,43 +37,50 @@
       padding: 0.75rem;
       border-radius: 8px;
       display: flex;
-      justify-content: space-between;
+      flex-direction: row;
       align-items: center;
-      transition: all 0.3s ease;
     }
     li.completed {
       text-decoration: line-through;
       opacity: 0.6;
       background: #d3f0d3;
     }
-    .details {
-      font-size: 0.9rem;
-      color: #666;
-    }
     label {
       flex-grow: 1;
       margin-left: 0.5rem;
+    }
+    .details {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.3);
+    }
+    @media (max-width: 480px) {
+      li {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      label {
+        margin-left: 0;
+        margin-top: 0.5rem;
+      }
     }
   </style>
 </head>
 <body>
   <h1>Grocery Checklist</h1>
   <div class="controls">
-    <label>
-      Sort by:
-      <select id="sortSelector">
-        <option value="default">Default</option>
-        <option value="location">Location</option>
-        <option value="week">Week Needed</option>
-      </select>
-    </label>
-    <button id="resetBtn">Reset</button>
+    <select id="sortSelector">
+      <option value="default">Sort: Default</option>
+      <option value="location">Sort: Location</option>
+      <option value="week">Sort: Week Needed</option>
+    </select>
+    <button id="resetButton">Reset Checklist</button>
   </div>
   <ul id="itemList"></ul>
 
   <script>
-    const STORAGE_KEY = "groceryChecklist_completed";
-
     const items = [
       { name: "Pasta", qty: "10 cup", week: [1], location: "Costco" },
       { name: "Pesto", qty: "2 cup", week: [1], location: "Home" },
@@ -100,8 +109,8 @@
       { name: "Palm Sugar", qty: "2 tbsp", week: [1], location: "Cub" },
       { name: "Parm", qty: "1 cup", week: [1], location: "Cub" },
       { name: "Fish", qty: "5 pcs", week: [1], location: "Costco" },
-      { name: "Onion", qty: "2 pcs", week: [1], location: "Costco" },
       { name: "Carrots", qty: "4 pcs", week: [1], location: "Cub" },
+      { name: "Onion", qty: "2 pcs", week: [1], location: "Costco" },
       { name: "Corn", qty: "2 cup", week: [1], location: "Costco" },
       { name: "Mushroom Powder", qty: "2 tsp", week: [1], location: "Cub" },
       { name: "Garlic Powder", qty: "2 tsp", week: [1], location: "Costco" },
@@ -137,10 +146,10 @@
       { name: "kitty liter", qty: "8 units", week: [1], location: "Costco" }
     ];
 
-    let completed = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let completed = JSON.parse(localStorage.getItem("completedItems")) || [];
 
     function saveCompleted() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+      localStorage.setItem("completedItems", JSON.stringify(completed));
     }
 
     function renderList(sortBy = 'default') {
@@ -156,7 +165,6 @@
 
       const activeItems = sortedItems.filter(item => !completed.includes(item.name));
       const doneItems = sortedItems.filter(item => completed.includes(item.name));
-
       [...activeItems, ...doneItems].forEach(item => {
         const li = document.createElement("li");
         li.className = completed.includes(item.name) ? "completed" : "";
@@ -166,7 +174,7 @@
         checkbox.checked = completed.includes(item.name);
         checkbox.onchange = () => {
           if (checkbox.checked) {
-            completed.push(item.name);
+            if (!completed.includes(item.name)) completed.push(item.name);
           } else {
             completed = completed.filter(name => name !== item.name);
           }
@@ -188,11 +196,12 @@
       renderList(e.target.value);
     });
 
-    document.getElementById("resetBtn").addEventListener("click", () => {
-      completed = [];
-      localStorage.removeItem(STORAGE_KEY);
-      document.getElementById("sortSelector").value = "default";
-      renderList("default");
+    document.getElementById("resetButton").addEventListener("click", () => {
+      if (confirm("Are you sure you want to reset the checklist?")) {
+        completed = [];
+        saveCompleted();
+        renderList(document.getElementById("sortSelector").value);
+      }
     });
 
     renderList();
